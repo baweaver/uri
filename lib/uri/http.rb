@@ -131,6 +131,27 @@ module URI
     def origin
       "#{scheme}://#{authority}"
     end
+
+    #
+    # Deconstructs the URI into a hash for pattern matching.
+    #
+    # Extends the keys from URI::Generic with HTTP-specific keys:
+    # +:request_uri+, +:authority+, and +:origin+.
+    #
+    #   uri = URI("http://example.com:8080/path?foo=bar")
+    #   uri.deconstruct_keys(nil)
+    #   # => {:scheme=>"http", :host=>"example.com", :port=>8080, :path=>"/path",
+    #   #     :query=>"foo=bar", :request_uri=>"/path?foo=bar",
+    #   #     :authority=>"example.com:8080", :origin=>"http://example.com:8080", ...}
+    #
+    #   case uri
+    #   in origin: "http://example.com:8080", path: /^\/api/
+    #     # matches
+    #   end
+    #
+    def deconstruct_keys(keys)
+      super.merge(request_uri: request_uri, authority: authority, origin: origin)
+    end
   end
 
   register_scheme 'HTTP', HTTP
