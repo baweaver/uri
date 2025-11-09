@@ -82,4 +82,49 @@ class URI::TestHTTP < Test::Unit::TestCase
     assert_equal('http://a.b.c', URI.parse('http://a.b.c:80/').origin)
     assert_equal('https://a.b.c', URI.parse('https://a.b.c/').origin)
   end
+
+  def test_deconstruct_keys
+    uri = URI("http://example.com:8080/path?foo=bar")
+    keys = uri.deconstruct_keys(nil)
+    assert_equal "http", keys[:scheme]
+    assert_equal "example.com", keys[:host]
+    assert_equal 8080, keys[:port]
+    assert_equal "/path?foo=bar", keys[:request_uri]
+    assert_equal "example.com:8080", keys[:authority]
+    assert_equal "http://example.com:8080", keys[:origin]
+  end
+
+  def test_pattern_matching_origin
+    begin
+      uri = URI("http://api.example.com/v2/users")
+      result = instance_eval <<~RUBY, __FILE__, __LINE__ + 1
+        case uri
+        in origin: "http://api.example.com", path: /^\\/v2/
+          "api v2"
+        else
+          "no match"
+        end
+      RUBY
+      assert_equal "api v2", result
+    rescue SyntaxError
+      omit "Pattern matching not supported in Ruby < 2.7"
+    end
+  end
+
+  def test_pattern_matching_authority
+    begin
+      uri = URI("http://example.com:8080/path")
+      result = instance_eval <<~RUBY, __FILE__, __LINE__ + 1
+        case uri
+        in authority: "example.com:8080", scheme: "http"
+          "matched"
+        else
+          "no match"
+        end
+      RUBY
+      assert_equal "matched", result
+    rescue SyntaxError
+      omit "Pattern matching not supported in Ruby < 2.7"
+    end
+  end
 end
